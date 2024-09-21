@@ -59,7 +59,7 @@ function CraftSim.COOLDOWNS.UI:Init()
             parent = content,
             anchorParent = content,
             offsetY = -2,
-            label = L(LID.COOLDOWNS_TAB_OVERVIEW),
+            label = "Overview",
         },
         parent = content,
         anchorParent = content,
@@ -76,7 +76,7 @@ function CraftSim.COOLDOWNS.UI:Init()
             anchorParent = content.overviewTab.button,
             anchorA = "LEFT",
             anchorB = "RIGHT",
-            Options = L(LID.COOLDOWNS_TAB_OPTIONS),
+            label = "Options",
         },
         parent = content,
         anchorParent = content,
@@ -228,7 +228,7 @@ function CraftSim.COOLDOWNS.UI:InitializeCooldownOptionsTab(cooldownOptionsTab)
         buttonOptions = {
             parent = content, anchorParent = content,
             anchorA = "TOP", anchorB = "TOP", offsetY = -10,
-            label = L(LID.COOLDOWNS_EXPANSION_FILTER_BUTTON),
+            label = "Expansion Filter",
             adjustWidth = true, sizeX = 20,
         },
         onSelectCallback = function(_, _, _)
@@ -305,7 +305,7 @@ function CraftSim.COOLDOWNS.UI:UpdateList()
                             end
                             if #recipeListText > 0 then
                                 tooltipText = tooltipText ..
-                                    L(CraftSim.CONST.TEXT.COOLDOWNS_RECIPE_LIST_TEXT_TOOLTIP) .. f.white(recipeListText)
+                                    f.bb("\n\nRecipes sharing this Cooldown:\n") .. f.white(recipeListText)
                             end
                         else
                             recipeColumn.text:SetText((recipeInfo and recipeInfo.name) or serializationID)
@@ -327,7 +327,7 @@ function CraftSim.COOLDOWNS.UI:UpdateList()
                                 f.bb(cooldownData:GetFormattedTimerNextCharge()))
                             row.allchargesFullTimestamp = allFullTS
                             if cdReady then
-                                allColumn.text:SetText(L(CraftSim.CONST.TEXT.COOLDOWNS_RECIPE_READY))
+                                allColumn.text:SetText(f.g("Ready"))
                             else
                                 allColumn.text:SetText(f.g(cooldownData:GetAllChargesFullDateFormatted()))
                             end

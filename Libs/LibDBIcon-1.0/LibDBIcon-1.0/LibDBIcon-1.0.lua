@@ -6,7 +6,7 @@
 --
 
 local DBICON10 = "LibDBIcon-1.0"
-local DBICON10_MINOR = 52 -- Bump on changes
+local DBICON10_MINOR = 55 -- Bump on changes
 if not LibStub then error(DBICON10 .. " requires LibStub.") end
 local ldb = LibStub("LibDataBroker-1.1", true)
 if not ldb then error(DBICON10 .. " requires LibDataBroker-1.1.") end
@@ -25,6 +25,15 @@ function lib:IconCallback(event, name, key, value)
 	if lib.objects[name] then
 		if key == "icon" then
 			lib.objects[name].icon:SetTexture(value)
+			if lib:IsButtonInCompartment(name) and lib:IsButtonCompartmentAvailable() then
+				local addonList = AddonCompartmentFrame.registeredAddons
+				for i =1, #addonList do
+					if addonList[i].text == name then
+						addonList[i].icon = value
+						return
+					end
+				end
+			end
 		elseif key == "iconCoords" then
 			lib.objects[name].icon:UpdateCoord()
 		elseif key == "iconR" then
@@ -39,7 +48,6 @@ function lib:IconCallback(event, name, key, value)
 		end
 	end
 end
-
 if not lib.callbackRegistered then
 	ldb.RegisterCallback(lib, "LibDataBroker_AttributeChanged__icon", "IconCallback")
 	ldb.RegisterCallback(lib, "LibDataBroker_AttributeChanged__iconCoords", "IconCallback")
@@ -52,9 +60,9 @@ end
 local function getAnchors(frame)
 	local x, y = frame:GetCenter()
 	if not x or not y then return "CENTER" end
-	local hhalf = (x > UIParent:GetWidth() * 2 / 3) and "RIGHT" or (x < UIParent:GetWidth() / 3) and "LEFT" or ""
-	local vhalf = (y > UIParent:GetHeight() / 2) and "TOP" or "BOTTOM"
-	return vhalf .. hhalf, frame, (vhalf == "TOP" and "BOTTOM" or "TOP") .. hhalf
+	local hhalf = (x > UIParent:GetWidth()*2/3) and "RIGHT" or (x < UIParent:GetWidth()/3) and "LEFT" or ""
+	local vhalf = (y > UIParent:GetHeight()/2) and "TOP" or "BOTTOM"
+	return vhalf..hhalf, frame, (vhalf == "TOP" and "BOTTOM" or "TOP")..hhalf
 end
 
 local function onEnter(self)
@@ -95,8 +103,8 @@ local function onLeave(self)
 	end
 end
 
-local function onEnterCompartment(self)
-	local buttonName = self.value
+local function onEnterCompartment(self, menu)
+	local buttonName = menu.text
 	local object = lib.objects[buttonName]
 	if object and object.dataObject then
 		if object.dataObject.OnTooltipShow then
@@ -110,10 +118,10 @@ local function onEnterCompartment(self)
 	end
 end
 
-local function onLeaveCompartment(self)
+local function onLeaveCompartment(self, menu)
 	lib.tooltip:Hide()
 
-	local buttonName = self.value
+	local buttonName = menu.text
 	local object = lib.objects[buttonName]
 	if object and object.dataObject then
 		if object.dataObject.OnLeave then
@@ -128,20 +136,20 @@ local onDragStart, updatePosition
 
 do
 	local minimapShapes = {
-		["ROUND"] = { true, true, true, true },
-		["SQUARE"] = { false, false, false, false },
-		["CORNER-TOPLEFT"] = { false, false, false, true },
-		["CORNER-TOPRIGHT"] = { false, false, true, false },
-		["CORNER-BOTTOMLEFT"] = { false, true, false, false },
-		["CORNER-BOTTOMRIGHT"] = { true, false, false, false },
-		["SIDE-LEFT"] = { false, true, false, true },
-		["SIDE-RIGHT"] = { true, false, true, false },
-		["SIDE-TOP"] = { false, false, true, true },
-		["SIDE-BOTTOM"] = { true, true, false, false },
-		["TRICORNER-TOPLEFT"] = { false, true, true, true },
-		["TRICORNER-TOPRIGHT"] = { true, false, true, true },
-		["TRICORNER-BOTTOMLEFT"] = { true, true, false, true },
-		["TRICORNER-BOTTOMRIGHT"] = { true, true, true, false },
+		["ROUND"] = {true, true, true, true},
+		["SQUARE"] = {false, false, false, false},
+		["CORNER-TOPLEFT"] = {false, false, false, true},
+		["CORNER-TOPRIGHT"] = {false, false, true, false},
+		["CORNER-BOTTOMLEFT"] = {false, true, false, false},
+		["CORNER-BOTTOMRIGHT"] = {true, false, false, false},
+		["SIDE-LEFT"] = {false, true, false, true},
+		["SIDE-RIGHT"] = {true, false, true, false},
+		["SIDE-TOP"] = {false, false, true, true},
+		["SIDE-BOTTOM"] = {true, true, false, false},
+		["TRICORNER-TOPLEFT"] = {false, true, true, true},
+		["TRICORNER-TOPRIGHT"] = {true, false, true, true},
+		["TRICORNER-BOTTOMLEFT"] = {true, true, false, true},
+		["TRICORNER-BOTTOMRIGHT"] = {true, true, true, false},
 	}
 
 	local rad, cos, sin, sqrt, max, min = math.rad, math.cos, math.sin, math.sqrt, math.max, math.min
@@ -155,12 +163,12 @@ do
 		local w = (Minimap:GetWidth() / 2) + lib.radius
 		local h = (Minimap:GetHeight() / 2) + lib.radius
 		if quadTable[q] then
-			x, y = x * w, y * h
+			x, y = x*w, y*h
 		else
-			local diagRadiusW = sqrt(2 * (w) ^ 2) - 10
-			local diagRadiusH = sqrt(2 * (h) ^ 2) - 10
-			x = max(-w, min(x * diagRadiusW, w))
-			y = max(-h, min(y * diagRadiusH, h))
+			local diagRadiusW = sqrt(2*(w)^2)-10
+			local diagRadiusH = sqrt(2*(h)^2)-10
+			x = max(-w, min(x*diagRadiusW, w))
+			y = max(-h, min(y*diagRadiusH, h))
 		end
 		button:SetPoint("CENTER", Minimap, "CENTER", x, y)
 	end
@@ -229,7 +237,7 @@ local function onDragStop(self)
 	end
 end
 
-local defaultCoords = { 0, 1, 0, 1 }
+local defaultCoords = {0, 1, 0, 1}
 local function updateCoord(self)
 	local coords = self:GetParent().dataObject.iconCoords or defaultCoords
 	local deltaX, deltaY = 0, 0
@@ -241,7 +249,7 @@ local function updateCoord(self)
 end
 
 local function createButton(name, object, db, customCompartmentIcon)
-	local button = CreateFrame("Button", "LibDBIcon10_" .. name, Minimap)
+	local button = CreateFrame("Button", "LibDBIcon10_"..name, Minimap)
 	button.dataObject = object
 	button.db = db
 	button:SetFrameStrata("MEDIUM")
@@ -372,7 +380,7 @@ end
 
 function lib:Register(name, object, db, customCompartmentIcon)
 	if not object.icon then error("Can't register LDB objects without icons set!") end
-	if lib:GetMinimapButton(name) then error(DBICON10 .. ": Object '" .. name .. "' is already registered.") end
+	if lib:GetMinimapButton(name) then error(DBICON10.. ": Object '".. name .."' is already registered.") end
 	createButton(name, object, db, customCompartmentIcon)
 end
 
@@ -461,7 +469,7 @@ end
 function lib:GetButtonList()
 	local t = {}
 	for name in next, lib.objects do
-		t[#t + 1] = name
+		t[#t+1] = name
 	end
 	return t
 end
@@ -498,39 +506,43 @@ function lib:IsButtonInCompartment(buttonName)
 end
 
 function lib:AddButtonToCompartment(buttonName, customIcon)
-	local object = lib.objects[buttonName]
-	if object and not object.compartmentData and AddonCompartmentFrame then
-		if object.db then
-			object.db.showInCompartment = true
+	if lib:IsButtonCompartmentAvailable() then
+		local object = lib.objects[buttonName]
+		if object and not object.compartmentData then
+			if object.db then
+				object.db.showInCompartment = true
+			end
+			object.compartmentData = {
+				text = buttonName,
+				icon = customIcon or object.dataObject.icon,
+				notCheckable = true,
+				registerForAnyClick = true,
+				func = function(_, menuInputData, menu)
+					object.dataObject.OnClick(menu, menuInputData.buttonName)
+				end,
+				funcOnEnter = onEnterCompartment,
+				funcOnLeave = onLeaveCompartment,
+			}
+			AddonCompartmentFrame:RegisterAddon(object.compartmentData)
 		end
-		object.compartmentData = {
-			text = buttonName,
-			icon = customIcon or object.dataObject.icon,
-			notCheckable = true,
-			registerForAnyClick = true,
-			func = function(frame, _, _, _, clickType)
-				object.dataObject.OnClick(frame, clickType)
-			end,
-			funcOnEnter = onEnterCompartment,
-			funcOnLeave = onLeaveCompartment,
-		}
-		AddonCompartmentFrame:RegisterAddon(object.compartmentData)
 	end
 end
 
 function lib:RemoveButtonFromCompartment(buttonName)
-	local object = lib.objects[buttonName]
-	if object and object.compartmentData then
-		for i = 1, #AddonCompartmentFrame.registeredAddons do
-			local entry = AddonCompartmentFrame.registeredAddons[i]
-			if entry == object.compartmentData then
-				object.compartmentData = nil
-				if object.db then
-					object.db.showInCompartment = nil
+	if lib:IsButtonCompartmentAvailable() then
+		local object = lib.objects[buttonName]
+		if object and object.compartmentData then
+			for i = 1, #AddonCompartmentFrame.registeredAddons do
+				local entry = AddonCompartmentFrame.registeredAddons[i]
+				if entry == object.compartmentData then
+					object.compartmentData = nil
+					if object.db then
+						object.db.showInCompartment = nil
+					end
+					table.remove(AddonCompartmentFrame.registeredAddons, i)
+					AddonCompartmentFrame:UpdateDisplay()
+					return
 				end
-				table.remove(AddonCompartmentFrame.registeredAddons, i)
-				AddonCompartmentFrame:UpdateDisplay()
-				return
 			end
 		end
 	end
@@ -564,7 +576,7 @@ for name, button in next, lib.objects do
 	end
 end
 lib:SetButtonRadius(lib.radius) -- Upgrade to 40
-if lib.notCreated then          -- Upgrade to 50
+if lib.notCreated then -- Upgrade to 50
 	for name in next, lib.notCreated do
 		createButton(name, lib.notCreated[name][1], lib.notCreated[name][2])
 	end

@@ -126,16 +126,16 @@ function CraftSim.CONCENTRATION_TRACKER.UI.InitTooltipFrame()
     content.concentrationList = GGUI.FrameList {
         columnOptions = {
             {
-                label = CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.CONCENTRATION_TRACKER_LABEL_CRAFTER),
+                label = "Crafter",
                 width = 160,
             },
             {
-                label = CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.CONCENTRATION_TRACKER_LABEL_CURRENT),
+                label = "Current",
                 width = 70,
                 justifyOptions = { type = "H", align = "CENTER" },
             },
             {
-                label = CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.CONCENTRATION_TRACKER_LABEL_MAX),
+                label = "Max",
                 width = 100,
                 justifyOptions = { type = "H", align = "CENTER" },
             }
@@ -215,7 +215,7 @@ function CraftSim.CONCENTRATION_TRACKER.UI:UpdateTooltipFrame(content)
                 if not isReady then
                     maxedColumn.text:SetText(f.bb(formattedMaxDate))
                 else
-                    maxedColumn.text:SetText(CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.CONCENTRATION_TRACKER_MAX))
+                    maxedColumn.text:SetText(f.g("MAX"))
                 end
             end)
         end
@@ -236,8 +236,8 @@ function CraftSim.CONCENTRATION_TRACKER.UI:UpdateDisplay()
     local formattedDateText, isReady = concentrationData:GetFormattedDateMax()
 
     if not isReady then
-        content.maxTimer:SetText(f.bb(CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.CONCENTRATION_TRACKER_MAX_VALUE) .. formattedDateText))
+        content.maxTimer:SetText(f.bb("Max: " .. formattedDateText))
     else
-        content.maxTimer:SetText(CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.CONCENTRATION_TRACKER_FULL))
+        content.maxTimer:SetText(f.g("Concentration Full"))
     end
 end

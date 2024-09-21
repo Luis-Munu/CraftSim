@@ -47,19 +47,6 @@ function CraftSim.ReagentData:new(recipeData, schematicInfo)
     end
 end
 
----@param itemID ItemID
-function CraftSim.ReagentData:IsOrderReagent(itemID)
-    if not self.recipeData.orderData then return false end
-
-    for _, reagentInfo in ipairs(self.recipeData.orderData.reagents or {}) do
-        if reagentInfo.reagent.itemID == itemID then
-            if reagentInfo.source == Enum.CraftingOrderReagentSource.Customer then
-                return true
-            end
-        end
-    end
-end
-
 ---@return CraftSim.Reagent.Serialized[]
 function CraftSim.ReagentData:SerializeRequiredReagents()
     return GUTIL:Map(self.requiredReagents, function(reagent)
@@ -189,12 +176,6 @@ end
 function CraftSim.ReagentData:ClearOptionalReagents()
     for _, slot in pairs(GUTIL:Concat({ self.optionalReagentSlots, self.finishingReagentSlots })) do
         slot.activeReagent = nil
-    end
-end
-
-function CraftSim.ReagentData:ClearRequiredReagents()
-    for _, reagent in ipairs(self.requiredReagents) do
-        reagent:Clear()
     end
 end
 
@@ -417,20 +398,16 @@ function CraftSim.ReagentData:GetCraftableAmount(crafterUID)
 
     local currentMinimumReagentFit = math.huge
     for _, requiredReagent in pairs(self.requiredReagents) do
-        if not requiredReagent:IsOrderReagentIn(self.recipeData) then
-            if not requiredReagent:HasItems(1, crafterUID) then
-                return 0
-            end
-            currentMinimumReagentFit = math.min(requiredReagent:HasQuantityXTimes(crafterUID), currentMinimumReagentFit)
+        if not requiredReagent:HasItems(1, crafterUID) then
+            return 0
         end
+        currentMinimumReagentFit = math.min(requiredReagent:HasQuantityXTimes(crafterUID), currentMinimumReagentFit)
     end
 
     if self:HasSparkSlot() then
         if self.sparkReagentSlot.activeReagent then
-            if not self.sparkReagentSlot.activeReagent:IsOrderReagentIn(self.recipeData) then
-                currentMinimumReagentFit = math.min(self.sparkReagentSlot:HasQuantityXTimes(crafterUID),
-                    currentMinimumReagentFit)
-            end
+            currentMinimumReagentFit = math.min(self.sparkReagentSlot:HasQuantityXTimes(crafterUID),
+                currentMinimumReagentFit)
         else
             currentMinimumReagentFit = 0
         end
@@ -442,13 +419,11 @@ function CraftSim.ReagentData:GetCraftableAmount(crafterUID)
     ---@type CraftSim.OptionalReagentSlot[]
     local optionalReagentSlots = GUTIL:Concat({ self.optionalReagentSlots, self.finishingReagentSlots })
     for _, optionalReagentSlot in pairs(optionalReagentSlots) do
-        if optionalReagentSlot.activeReagent and not optionalReagentSlot.activeReagent:IsOrderReagentIn(self.recipeData) then
-            if not optionalReagentSlot:HasItem(1, crafterUID) then
-                return 0
-            end
-            currentMinimumReagentFitOptional = math.min(optionalReagentSlot:HasQuantityXTimes(crafterUID),
-                currentMinimumReagentFitOptional)
+        if not optionalReagentSlot:HasItem(1, crafterUID) then
+            return 0
         end
+        currentMinimumReagentFitOptional = math.min(optionalReagentSlot:HasQuantityXTimes(crafterUID),
+            currentMinimumReagentFitOptional)
     end
     print("minimum optional fit: " .. tostring(currentMinimumReagentFitOptional))
 
@@ -483,12 +458,10 @@ function CraftSim.ReagentData:GetTooltipText(multiplier, crafterUID)
     multiplier = multiplier or 1
     local iconSize = 25
     local text = ""
-
     for _, requiredReagent in pairs(self.requiredReagents) do
         local reagentIcon = requiredReagent.items[1].item:GetItemIcon()
         local inlineIcon = GUTIL:IconToText(reagentIcon, iconSize, iconSize)
         text = text .. inlineIcon
-        local isOrderReagent = requiredReagent:IsOrderReagentIn(self.recipeData)
         if not requiredReagent.hasQuality then
             local reagentItem = requiredReagent.items[1]
             local itemID = reagentItem.item:GetItemID()
@@ -500,24 +473,20 @@ function CraftSim.ReagentData:GetTooltipText(multiplier, crafterUID)
             local quantityText = f.r(tostring(requiredReagent.requiredQuantity * multiplier) ..
                 "(" .. tostring(itemCount) .. ")")
 
-            if itemCount >= (requiredReagent.requiredQuantity * multiplier) or isOrderReagent then
+            if itemCount >= (requiredReagent.requiredQuantity * multiplier) then
                 quantityText = f.g(tostring(requiredReagent.requiredQuantity * multiplier))
             end
 
             local crafterText = ""
             -- add crafterInfo text if reagent is supposed to be crafted by the player
             -- check for quantity not needed for non quality items
-            if not isOrderReagent and self.recipeData:IsSelfCraftedReagent(itemID) then
+            if self.recipeData:IsSelfCraftedReagent(itemID) then
                 local optimizedReagentRecipeData = self.recipeData.optimizedSubRecipes
                     [itemID]
                 if optimizedReagentRecipeData then
                     crafterText = f.white(" (" ..
                         optimizedReagentRecipeData:GetFormattedCrafterText(false, true, 12, 12) .. ")")
                 end
-            end
-
-            if isOrderReagent then
-                crafterText = " " .. CreateAtlasMarkup("UI-ChatIcon-App", 20, 20)
             end
 
             text = text .. " x " .. quantityText .. crafterText .. "\n"
@@ -534,24 +503,19 @@ function CraftSim.ReagentData:GetTooltipText(multiplier, crafterUID)
                 local quantityText = f.r(
                     tostring(reagentItem.quantity * multiplier) .. "(" .. tostring(itemCount) .. ")")
 
-                if itemCount >= reagentItem.quantity * multiplier or (reagentItem.quantity == 0 and totalCountOK) or isOrderReagent then
+                if itemCount >= reagentItem.quantity * multiplier or (reagentItem.quantity == 0 and totalCountOK) then
                     quantityText = f.g(tostring(reagentItem.quantity * multiplier))
                 end
                 local qualityIcon = GUTIL:GetQualityIconString(qualityID, 20, 20)
                 local crafterText = ""
                 -- add crafterInfo text if reagent is supposed to be crafted by the player
-                if not isOrderReagent and self.recipeData:IsSelfCraftedReagent(itemID) and reagentItem.quantity > 0 then
+                if self.recipeData:IsSelfCraftedReagent(itemID) and reagentItem.quantity > 0 then
                     local optimizedReagentRecipeData = self.recipeData.optimizedSubRecipes[itemID]
                     if optimizedReagentRecipeData then
                         crafterText = f.white(" (" ..
                             optimizedReagentRecipeData:GetFormattedCrafterText(false, true, 12, 12) .. ")")
                     end
                 end
-
-                if isOrderReagent and reagentItem.quantity > 0 then
-                    crafterText = " " .. CreateAtlasMarkup("UI-ChatIcon-App", 20, 20)
-                end
-
                 text = text .. qualityIcon .. quantityText .. crafterText .. "   "
             end
             text = text .. "\n"
@@ -560,32 +524,24 @@ function CraftSim.ReagentData:GetTooltipText(multiplier, crafterUID)
 
     if self:HasSparkSlot() then
         if self.sparkReagentSlot.activeReagent then
-            local itemID = self.sparkReagentSlot.activeReagent.item:GetItemID()
-            local isOrderReagent = self.sparkReagentSlot.activeReagent:IsOrderReagentIn(self.recipeData)
             local reagentIcon = self.sparkReagentSlot.activeReagent.item:GetItemIcon()
             local inlineIcon = GUTIL:IconToText(reagentIcon, iconSize, iconSize)
             text = text .. inlineIcon
             local itemCount = CraftSim.CRAFTQ:GetItemCountFromCraftQueueCache(crafterUID,
-                itemID)
-            local requiredQuantity = self.sparkReagentSlot.maxQuantity * multiplier
-            local quantityText = f.r(tostring(requiredQuantity) .. "(" .. tostring(itemCount) .. ")")
-            if itemCount >= requiredQuantity or isOrderReagent then
-                quantityText = f.g(tostring(requiredQuantity))
+                self.sparkReagentSlot.activeReagent.item:GetItemID())
+            local quantityText = f.r(tostring(multiplier) .. "(" .. tostring(itemCount) .. ")")
+            if itemCount >= multiplier then
+                quantityText = f.g(tostring(multiplier))
             end
             local crafterText = ""
             -- add crafterInfo text if reagent is supposed to be crafted by the player
             local optimizedReagentRecipeData = self.recipeData.optimizedSubRecipes
-                [itemID]
-            if not isOrderReagent and optimizedReagentRecipeData then
+                [self.sparkReagentSlot.activeReagent.item:GetItemID()]
+            if optimizedReagentRecipeData then
                 crafterText = f.white(" (" ..
                     optimizedReagentRecipeData:GetFormattedCrafterText(false, true, 12, 12) .. ")")
             end
-
-            if isOrderReagent then
-                crafterText = " " .. CreateAtlasMarkup("UI-ChatIcon-App", 20, 20)
-            end
-
-            text = text .. " " .. quantityText .. crafterText .. "   "
+            text = text .. quantityText .. crafterText .. "   "
         end
     end
 

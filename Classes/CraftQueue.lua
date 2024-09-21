@@ -31,7 +31,13 @@ function CraftSim.CraftQueue:AddRecipe(options)
 
     -- make sure all required reagents are maxed out
     recipeData:SetNonQualityReagentsMax()
-    recipeData:SetCheapestQualityReagentsMax()
+    for _, reagent in ipairs(recipeData.reagentData.requiredReagents) do
+        if reagent.hasQuality then
+            if reagent:GetTotalQuantity() < reagent.requiredQuantity then
+                reagent:SetCheapestQualityMax(recipeData.subRecipeCostsEnabled)
+            end
+        end
+    end
 
     local craftQueueItem = self:FindRecipe(recipeData)
 
@@ -113,9 +119,7 @@ end
 ---@param recipeData CraftSim.RecipeData
 ---@return CraftSim.CraftQueueItem | nil craftQueueItem
 function CraftSim.CraftQueue:FindRecipe(recipeData)
-    local craftQueueItem = self.recipeCrafterMap[recipeData:GetRecipeCraftQueueUID()]
-
-    return craftQueueItem
+    return self.recipeCrafterMap[recipeData:GetRecipeCraftQueueUID()]
 end
 
 ---@param craftQueueItem CraftSim.CraftQueueItem
@@ -373,18 +377,10 @@ function CraftSim.CraftQueue:OnRecipeCrafted(recipeData)
 
     if not craftQueueItem then return end
 
-    -- if found only recognize as same crafted if concentration status and more is the same
-
-    if craftQueueItem.recipeData.concentrating ~= recipeData.concentrating then return end
-
-    if craftQueueItem.recipeData:GetReagentUID() ~= recipeData:GetReagentUID() then return end
-
-    -- decrement by one and refresh list (only when not work order recipe)
-    if not craftQueueItem.recipeData.orderData then
-        local newAmount = CraftSim.CRAFTQ.craftQueue:SetAmount(recipeData, -1, true)
-        if newAmount and newAmount <= 0 and CraftSim.DB.OPTIONS:Get("CRAFTQUEUE_FLASH_TASKBAR_ON_CRAFT_FINISHED") then
-            FlashClientIcon()
-        end
+    -- decrement by one and refresh list
+    local newAmount = CraftSim.CRAFTQ.craftQueue:SetAmount(recipeData, -1, true)
+    if newAmount and newAmount <= 0 and CraftSim.DB.OPTIONS:Get("CRAFTQUEUE_FLASH_TASKBAR_ON_CRAFT_FINISHED") then
+        FlashClientIcon()
     end
     CraftSim.CRAFTQ.UI:UpdateDisplay()
 end

@@ -206,7 +206,7 @@ function CraftSim.CUSTOMER_HISTORY.UI:Init()
                     anchorA = "RIGHT",
                     anchorB = "RIGHT",
                     justifyOptions = { type = "H", align = "RIGHT" },
-                    text = L(CraftSim.CONST.TEXT.CUSTOMER_HISTORY_CHAT_MESSAGE_TIMESTAMP)
+                    text = "Timestamp"
                 })
                 senderColumn.text = GGUI.Text({
                     parent = senderColumn,
@@ -214,7 +214,7 @@ function CraftSim.CUSTOMER_HISTORY.UI:Init()
                     anchorA = "RIGHT",
                     anchorB = "RIGHT",
                     justifyOptions = { type = "H", align = "RIGHT" },
-                    text = L(CraftSim.CONST.TEXT.CUSTOMER_HISTORY_CHAT_MESSAGE_SENDER)
+                    text = "Sender"
                 })
                 messageColumn.text = GGUI.Text({
                     parent = messageColumn,
@@ -222,7 +222,7 @@ function CraftSim.CUSTOMER_HISTORY.UI:Init()
                     anchorA = "TOPLEFT",
                     anchorB = "TOPLEFT",
                     justifyOptions = { type = "HV", alignH = "LEFT", alignV = "CENTER" },
-                    text = L(CraftSim.CONST.TEXT.CUSTOMER_HISTORY_CHAT_MESSAGE_MESSAGE),
+                    text = "Message",
                     fixedWidth = chatMessageColumnWidth,
                     offsetY = -4.1,
                 })
@@ -283,7 +283,7 @@ function CraftSim.CUSTOMER_HISTORY.UI:Init()
                     anchorA = "LEFT",
                     anchorB = "LEFT",
                     justifyOptions = { type = "H", align = "LEFT" },
-                    text = L(CraftSim.CONST.TEXT.CUSTOMER_HISTORY_CRAFT_LIST_TIMESTAMP)
+                    text = "Timestamp"
                 })
                 resultColumn.text = GGUI.Text({
                     parent = resultColumn,
@@ -291,7 +291,7 @@ function CraftSim.CUSTOMER_HISTORY.UI:Init()
                     anchorA = "RIGHT",
                     anchorB = "RIGHT",
                     justifyOptions = { type = "H", align = "LEFT" },
-                    text = L(CraftSim.CONST.TEXT.CUSTOMER_HISTORY_CRAFT_LIST_RESULTLINK)
+                    text = "ResultLink"
                 })
                 tipColumn.text = GGUI.Text({
                     parent = tipColumn,
@@ -299,14 +299,14 @@ function CraftSim.CUSTOMER_HISTORY.UI:Init()
                     anchorA = "RIGHT",
                     anchorB = "RIGHT",
                     justifyOptions = { type = "H", align = "RIGHT" },
-                    text = L(CraftSim.CONST.TEXT.CUSTOMER_HISTORY_CRAFT_LIST_TIP),
+                    text = "Tip",
                 })
                 reagentColumn.icon = GGUI.HelpIcon({
-                    parent = reagentColumn, anchorParent = reagentColumn, text = L(CraftSim.CONST.TEXT.CUSTOMER_HISTORY_CRAFT_LIST_REAGENTS),
+                    parent = reagentColumn, anchorParent = reagentColumn, text = "Reagents",
                 })
 
                 noteColumn.icon = GGUI.HelpIcon {
-                    parent = noteColumn, anchorParent = noteColumn, text = L(CraftSim.CONST.TEXT.CUSTOMER_HISTORY_CRAFT_LIST_SOMENOTE),
+                    parent = noteColumn, anchorParent = noteColumn, text = "SomeNote"
                 }
 
                 GGUI:EnableHyperLinksForFrameAndChilds(resultColumn)
@@ -499,7 +499,7 @@ function CraftSim.CUSTOMER_HISTORY.UI:UpdateCustomerChatHistory(customer, chatHi
                 local sender = "[" .. tostring(customer) .. "]: "
 
                 if chatMessage.fromPlayer then
-                    sender = L(CraftSim.CONST.TEXT.CUSTOMER_HISTORY_CHAT_MESSAGE_YOU)
+                    sender = "[You]: "
                 end
 
                 senderColumn.text:SetText(f.whisper(tostring(sender)))

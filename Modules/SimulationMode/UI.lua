@@ -113,7 +113,7 @@ function CraftSim.SIMULATION_MODE.UI:Init()
                 owner = reagentOverwriteFrame.content,
                 anchor = "ANCHOR_CURSOR",
                 textWrap = true,
-                text = CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.SIMULATION_MODE_QUALITY_BUTTON_TOOLTIP) .. GUTIL:GetQualityIconString(1, 20, 20),
+                text = "Max All Reagents of Quality " .. GUTIL:GetQualityIconString(1, 20, 20),
             },
         })
         reagentOverwriteFrame.content.quality2Button = GGUI.Button({
@@ -133,7 +133,7 @@ function CraftSim.SIMULATION_MODE.UI:Init()
                 owner = reagentOverwriteFrame.content,
                 anchor = "ANCHOR_CURSOR",
                 textWrap = true,
-                text = CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.SIMULATION_MODE_QUALITY_BUTTON_TOOLTIP) .. GUTIL:GetQualityIconString(2, 20, 20),
+                text = "Max All Reagents of Quality " .. GUTIL:GetQualityIconString(2, 20, 20),
             },
         })
 
@@ -154,7 +154,7 @@ function CraftSim.SIMULATION_MODE.UI:Init()
                 owner = reagentOverwriteFrame.content,
                 anchor = "ANCHOR_CURSOR",
                 textWrap = true,
-                text = CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.SIMULATION_MODE_QUALITY_BUTTON_TOOLTIP) .. GUTIL:GetQualityIconString(3, 20, 20),
+                text = "Max All Reagents of Quality " .. GUTIL:GetQualityIconString(3, 20, 20),
             },
         })
         reagentOverwriteFrame.content.clearAllocationsButton = GGUI.Button({
@@ -163,7 +163,7 @@ function CraftSim.SIMULATION_MODE.UI:Init()
             anchorA = "LEFT",
             anchorB = "RIGHT",
             offsetX = inputOffsetX - 30,
-            label = CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.SIMULATION_MODE_CLEAR_BUTTON),
+            label = "Clear",
             adjustWidth = true,
             sizeX = 10,
             sizeY = 25,
@@ -449,7 +449,7 @@ function CraftSim.SIMULATION_MODE.UI:Init()
             anchorParent = simModeDetailsFrame.content.reagentMaxFactorValue,
             anchorA = "TOP", anchorB = "BOTTOM", offsetY = -5,
             labelOptions = {
-                text = GUTIL:IconToText(CraftSim.CONST.CONCENTRATION_ICON, 20, 20) .. CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.SIMULATION_MODE_CONCENTRATION),
+                text = GUTIL:IconToText(CraftSim.CONST.CONCENTRATION_ICON, 20, 20) .. " Concentration",
                 anchorA = "TOPLEFT", anchorB = "BOTTOMLEFT", offsetY = -7,
                 anchorParent = simModeDetailsFrame.content.reagentMaxFactorTitle
             },
@@ -465,7 +465,7 @@ function CraftSim.SIMULATION_MODE.UI:Init()
             anchorParent = simModeDetailsFrame.content.concentrationCB.labelText.frame,
             anchorA = "TOPLEFT", anchorB = "BOTTOMLEFT", offsetY = -7,
             justifyOptions = { type = "H", align = "LEFT" },
-            text = CraftSim.LOCAL:GetText(CraftSim.CONST.TEXT.SIMULATION_MODE_CONCENTRATION_COST),
+            text = "Concentration Cost: ",
         }
 
         simModeDetailsFrame.content.concentrationCostValue = GGUI.Text {
@@ -534,6 +534,36 @@ function CraftSim.SIMULATION_MODE.UI:Init()
         .SchematicForm)
     CraftSim.SIMULATION_MODE.UI.WORKORDER = createSimulationModeFrames(ProfessionsFrame.OrdersPage.OrderView
         .OrderDetails.SchematicForm)
+end
+
+function CraftSim.SIMULATION_MODE.UI:ResetAllNodeModFramesForTab(tab)
+    for _, nodeModFrame in pairs(tab.content.nodeModFrames) do
+        nodeModFrame:Hide()
+        nodeModFrame.showParentLine:Hide()
+    end
+end
+
+function CraftSim.SIMULATION_MODE.UI:GetSpecNodeModFramesByTabAndLayerAndLayerMax(tabIndex, layer, layerMaxNodes)
+    local exportMode = CraftSim.UTIL:GetExportModeByVisibility()
+    local specSimFrame = nil
+    if exportMode == CraftSim.CONST.EXPORT_MODE.WORK_ORDER then
+        specSimFrame = GGUI:GetFrame(CraftSim.INIT.FRAMES, CraftSim.CONST.FRAMES.SPEC_SIM_WO)
+    else
+        specSimFrame = GGUI:GetFrame(CraftSim.INIT.FRAMES, CraftSim.CONST.FRAMES.SPEC_SIM)
+    end
+
+    local tab = specSimFrame.content.specializationTabs[tabIndex]
+
+    if tab then
+        local nodeModFrames = tab.content.nodeModFrames
+        local relevantModFrames = GUTIL:Filter(nodeModFrames, function(nodeModFrame)
+            return nodeModFrame.layer == layer and nodeModFrame.layerMaxNodes == layerMaxNodes
+        end)
+
+        return relevantModFrames
+    end
+
+    return {}
 end
 
 function CraftSim.SIMULATION_MODE.UI:CreateReagentOverwriteFrame(reagentOverwriteFrame, offsetX, offsetY, baseX,

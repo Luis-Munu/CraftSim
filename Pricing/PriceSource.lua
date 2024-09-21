@@ -116,7 +116,13 @@ function CraftSim.PRICE_SOURCE:GetMinBuyoutByItemLink(itemLink, isReagent, force
     end
 
     if ahPrice == nil then
-        if CraftSim.PRICE_SOURCE.noPriceDataLinks[itemLink] == nil then
+        -- Ensure noPriceDataLinks is initialized
+        if not CraftSim.PRICE_SOURCE.noPriceDataLinks then
+            CraftSim.PRICE_SOURCE.noPriceDataLinks = {}
+        end
+
+        -- Check if itemLink is valid before accessing the table
+        if itemLink and CraftSim.PRICE_SOURCE.noPriceDataLinks[itemLink] == nil then
             -- not beautiful but hey, easy map
             CraftSim.PRICE_SOURCE.noPriceDataLinks[itemLink] = itemLink
         end

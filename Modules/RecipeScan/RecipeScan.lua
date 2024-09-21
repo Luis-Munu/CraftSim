@@ -122,9 +122,35 @@ function CraftSim.RECIPE_SCAN:CancelProfessionScan()
     end
 end
 
+--- Checks if any of the recipe's result items have a sale rate above the threshold
+---@param recipeData CraftSim.RecipeData
+---@param saleRateThreshold number
+function CraftSim.RECIPE_SCAN:CheckSaleRateThreshold(recipeData, saleRateThreshold)
+    if not select(2, C_AddOns.IsAddOnLoaded(CraftSim.CONST.SUPPORTED_PRICE_API_ADDONS[1])) then
+        print("TSM not loaded - skipping sale rate check")
+        return true
+    end
+
+    local itemsByQuality = recipeData.resultData.itemsByQuality or {}
+
+    for qualityID, item in pairs(itemsByQuality) do
+        local itemLink = item:GetItemLink()
+        if itemLink then
+            local itemSaleRate = CraftSimTSM:GetItemSaleRate(itemLink)
+            if itemSaleRate and itemSaleRate >= saleRateThreshold then
+                print("Sale rate passed for item: " .. itemLink .. " with sale rate: " .. itemSaleRate)
+                return true
+            end
+        end
+    end
+
+    print("Sale rate below threshold for recipe: " .. recipeData.recipeName)
+    return false
+end
+
 ---@param crafterUID string
 ---@param recipeInfo TradeSkillRecipeInfo
-function CraftSim.RECIPE_SCAN.FilterRecipeInfo(crafterUID, recipeInfo)
+function CraftSim.RECIPE_SCAN.FilterRecipeInfo(crafterUID, recipeInfo, crafterData)
     printF("Filtering Recipe: " .. tostring(recipeInfo.name))
     if tContains(CraftSim.CONST.ALCHEMICAL_EXPERIMENTATION_RECIPE_IDS, recipeInfo.recipeID) then
         printF("Is Alchemical Experimentation: Exclude")
@@ -178,6 +204,7 @@ function CraftSim.RECIPE_SCAN.FilterRecipeInfo(crafterUID, recipeInfo)
         return professionInfo.professionID == skillLineID
     end)
 
+    -- HOLA
     if recipeExpansionIncluded and recipeInfo.isEnchantingRecipe then
         local baseOperationInfo = C_TradeSkillUI.GetCraftingOperationInfo(recipeInfo.recipeID, {}, nil, false)
         if not baseOperationInfo then return false end
@@ -200,6 +227,7 @@ function CraftSim.RECIPE_SCAN.FilterRecipeInfo(crafterUID, recipeInfo)
         end)
         return false
     end
+
     if recipeExpansionIncluded then
         if recipeInfo and not recipeInfo.isGatheringRecipe and not recipeInfo.isSalvageRecipe and not recipeInfo.isRecraft then
             if recipeInfo.hyperlink then
@@ -246,7 +274,7 @@ function CraftSim.RECIPE_SCAN:GetScanRecipeInfo(row)
         printF("Total RecipeIDs: " .. #recipeIDs)
         return GUTIL:Map(recipeIDs, function(recipeID)
             local recipeInfo = C_TradeSkillUI.GetRecipeInfo(recipeID)
-            if CraftSim.RECIPE_SCAN.FilterRecipeInfo(row.crafterUID, recipeInfo) then
+            if CraftSim.RECIPE_SCAN.FilterRecipeInfo(row.crafterUID, recipeInfo, row.crafterData) then
                 return recipeInfo
             end
             return nil
@@ -259,7 +287,7 @@ function CraftSim.RECIPE_SCAN:GetScanRecipeInfo(row)
         -- also take from db
         local recipeInfo = CraftSim.DB.CRAFTER:GetRecipeInfo(row.crafterUID, recipeID)
 
-        if CraftSim.RECIPE_SCAN.FilterRecipeInfo(row.crafterUID, recipeInfo) then
+        if CraftSim.RECIPE_SCAN.FilterRecipeInfo(row.crafterUID, recipeInfo, row.crafterData) then
             return recipeInfo
         end
         return nil
@@ -342,10 +370,17 @@ function CraftSim.RECIPE_SCAN:StartScan(row)
 
         local function continueScan()
             CraftSim.DEBUG:StopProfiling("Single Recipe Scan")
-            CraftSim.RECIPE_SCAN.UI:AddRecipe(row, recipeData)
-
-            table.insert(row.currentResults, recipeData)
-
+        
+            local saleRateThreshold = 0.2
+            local saleRatePassed = CraftSim.RECIPE_SCAN:CheckSaleRateThreshold(recipeData, saleRateThreshold)
+        
+            if saleRatePassed then
+                CraftSim.RECIPE_SCAN.UI:AddRecipe(row, recipeData)
+                table.insert(row.currentResults, recipeData)
+            else
+                print("Recipe excluded due to low sale rate: " .. recipeData.recipeName)
+            end
+        
             currentIndex = currentIndex + 1
             RunNextFrame(scanRecipesByInterval)
         end

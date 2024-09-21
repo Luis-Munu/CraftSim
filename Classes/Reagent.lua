@@ -2,8 +2,6 @@
 local CraftSim = select(2, ...)
 local print = CraftSim.DEBUG:SetDebugPrint(CraftSim.CONST.DEBUG_IDS.DATAEXPORT)
 
-local GUTIL = CraftSim.GUTIL
-
 ---@class CraftSim.Reagent : CraftSim.CraftSimObject
 CraftSim.Reagent = CraftSim.CraftSimObject:extend()
 
@@ -87,7 +85,6 @@ function CraftSim.Reagent:GetReagentItemList()
     return reagentItemList
 end
 
----@return CraftSim.Reagent
 function CraftSim.Reagent:Copy()
     local copy = CraftSim.Reagent()
 
@@ -249,20 +246,4 @@ function CraftSim.Reagent:GetJSON(indent)
     jb:AddList("items", self.items, true)
     jb:End()
     return jb.json
-end
-
----@param recipeData CraftSim.RecipeData
----@return boolean
-function CraftSim.Reagent:IsOrderReagentIn(recipeData)
-    if not recipeData.orderData then return false end
-
-    local orderItemIDs = GUTIL:Map(recipeData.orderData.reagents or {}, function(reagentInfo)
-        return reagentInfo.reagent.itemID
-    end)
-
-    local isOrderReagent = GUTIL:Some(self.items, function(reagentItem)
-        return tContains(orderItemIDs, reagentItem.item:GetItemID())
-    end)
-
-    return isOrderReagent
 end
